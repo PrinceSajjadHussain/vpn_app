@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VPN Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #0073e6, #00b3b3);
+            color: white;
+            text-align: center;
+            padding: 50px;
+        }
+        .form-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        select, input[type="checkbox"], input[type="password"] {
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .toggle-button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+        }
+        .toggle-button.off {
+            background-color: #dc3545;
+        }
+        .status {
+            font-size: 18px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>VPN Dashboard</h1>
+    <div class="form-container">
+        <form method="post">
+            {% csrf_token %}
+            <div>
+                <label for="id_country">Select Country:</label>
+                {{ vpn_form.country }}
+            </div>
+            <div>
+                <label for="id_enable_vpn">Enable VPN:</label>
+                {{ vpn_form.enable_vpn }}
+            </div>
+            <div>
+                <label for="id_sudo_password">Sudo Password:</label>
+                {{ sudo_form.sudo_password }}
+            </div>
+            <button type="submit" class="toggle-button {% if not vpn_user.is_enabled %}off{% endif %}">
+                {% if vpn_user.is_enabled %}Disable VPN{% else %}Enable VPN{% endif %}
+            </button>
+        </form>
+        <div class="status">
+            <p>VPN Status: <strong>{{ vpn_user.is_enabled|yesno:"Connected,Disconnected" }}</strong></p>
+            <p>Connected Country: <strong>{{ vpn_user.get_country_display }}</strong></p>
+        </div>
+    </div>
+    <div id="country-info"></div>
+
+    <script>
+        $(document).ready(function() {
+            // Fetch the user's IP address
+            $.getJSON('https://api.ipify.org?format=json', function(data) {
+                var ipAddress = data.ip;
+                $('#country-info').text('Your IP address: ' + ipAddress);
+                
+                // Fetch country information based on the IP address
+                $.getJSON('https://api.ipgeolocation.io/ipgeo?apiKey=7D33C0F45C69348AEA0222C114A03AA6&ip=' + ipAddress, function(info) {
+                    $('#country-info').append('<br>Country: ' + info.country_name);
+                });
+            });
+
+            // Toggle button text based on VPN status
+            const toggleButton = document.querySelector('.toggle-button');
+            const enableVpnCheckbox = document.querySelector('#id_enable_vpn');
+
+            toggleButton.addEventListener('click', function() {
+                if (enableVpnCheckbox.checked) {
+                    toggleButton.classList.add('off');
+                    toggleButton.textContent = 'Enable VPN';
+                } else {
+                    toggleButton.classList.remove('off');
+                    toggleButton.textContent = 'Disable VPN';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
